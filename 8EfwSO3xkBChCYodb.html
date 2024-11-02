@@ -1,0 +1,620 @@
+<html><head><base href="https://websim.ai" /><title>Purchase & Reward Portal</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+}
+button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+input {
+    padding: 10px;
+    margin: 5px 0;
+    width: 200px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+#receiptDetails, #adminPanel, #rewardDetails, #purchaseReview, #searchRewardResults {
+    display: none;
+    margin-top: 20px;
+}
+.item {
+    background-color: #f9f9f9;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#itemList, #userList, #purchasesList {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 10px;
+}
+#homeButton {
+    background-color: #f44336;
+}
+.suggestions {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    z-index: 99;
+    top: 100%;
+    left: 0;
+    right: 0;
+}
+.suggestions div {
+    padding: 10px;
+    cursor: pointer;
+    hover: background-color: #f1f1f1;
+}
+.suggestions div:hover {
+    background-color: #e9e9e9;
+}
+.relative {
+    position: relative;
+}
+.delete-btn {
+    background-color: #f44336;
+    margin-left: 5px;
+}
+.edit-btn {
+    background-color: #2196F3;
+    margin-left: 5px;
+}
+#rewardButton {
+    background-color: #FFC107;
+}
+#useRewardButton {
+    background-color: #9C27B0;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div id="homePage">
+        <h1>Purchase & Reward Portal</h1>
+        <button onclick="showReceiptForm()">View Receipt</button>
+        <button onclick="showAdminForm()">Admin</button>
+        <button id="rewardButton" onclick="showRewardForm()">Check Rewards</button>
+    </div>
+
+    <div id="receiptForm" style="display:none;">
+        <div class="relative">
+            <input type="text" id="username" placeholder="Enter username" onkeyup="suggestUser(this.value)">
+            <div id="userSuggestions" class="suggestions"></div>
+        </div>
+        <button onclick="getReceipt()">Get Receipt</button>
+        <button onclick="showHomePage()">Back to Home</button>
+    </div>
+
+    <div id="adminForm" style="display:none;">
+        <input type="password" id="adminPasscode" placeholder="Enter admin passcode">
+        <button onclick="verifyAdmin()">Login</button>
+        <button onclick="showHomePage()">Back to Home</button>
+    </div>
+
+    <div id="rewardForm" style="display:none;">
+        <div class="relative">
+            <input type="text" id="rewardUsername" placeholder="Enter username" onkeyup="suggestUser(this.value, 'rewardUserSuggestions')">
+            <div id="rewardUserSuggestions" class="suggestions"></div>
+        </div>
+        <button onclick="checkRewards()">Check Rewards</button>
+        <button onclick="showHomePage()">Back to Home</button>
+    </div>
+
+    <div id="receiptDetails"></div>
+    <div id="rewardDetails"></div>
+
+    <div id="adminPanel">
+        <h2>Admin Panel</h2>
+        <div>
+            <h3>Add New Item</h3>
+            <input type="text" id="itemName" placeholder="Item name">
+            <input type="number" id="itemPrice" placeholder="Item price">
+            <button onclick="addItem()">Add Item</button>
+        </div>
+        <div id="itemList"></div>
+        <div>
+            <h3>Add New User</h3>
+            <input type="text" id="newUsername" placeholder="Username">
+            <button onclick="addUser()">Add User</button>
+        </div>
+        <div id="userList"></div>
+        <div>
+            <h3>Create Purchase</h3>
+            <div class="relative">
+                <input type="text" id="purchaseUsername" placeholder="Username" onkeyup="suggestUser(this.value, 'purchaseUserSuggestions')">
+                <div id="purchaseUserSuggestions" class="suggestions"></div>
+            </div>
+            <div id="purchaseItems"></div>
+            <button onclick="reviewPurchase()">Review Purchase</button>
+        </div>
+        <div>
+            <h3>Modify Rewards</h3>
+            <input type="text" id="rewardUserInput" placeholder="Username">
+            <input type="number" id="rewardAmount" placeholder="New reward amount">
+            <button onclick="modifyReward()">Modify Reward</button>
+        </div>
+        <div>
+            <h3>Search User Rewards</h3>
+            <input type="text" id="searchRewardInput" placeholder="Enter username">
+            <button onclick="searchRewards()">Search</button>
+            <div id="searchRewardResults"></div>
+        </div>
+        <div>
+            <h3>View All Purchases</h3>
+            <div id="purchasesList"></div>
+        </div>
+        <button id="homeButton" onclick="showHomePage()">Back to Home</button>
+    </div>
+
+    <div id="purchaseReview">
+        <h2>Purchase Review</h2>
+        <div id="reviewItems"></div>
+        <div id="reviewTotal"></div>
+        <div id="reviewRewards"></div>
+        <button onclick="confirmPurchase()">Confirm Purchase</button>
+        <button id="useRewardButton" onclick="useRewardForPurchase()">Use Reward for Purchase</button>
+        <button onclick="cancelPurchase()">Cancel</button>
+    </div>
+</div>
+
+<script>
+const JSONBIN_BIN_ID = 'YOUR_BIN_ID_HERE'; // You'll need to create this on JSONbin.io
+const JSONBIN_API_KEY = 'YOUR_API_KEY_HERE'; // You'll need to get this from JSONbin.io
+
+let items = [];
+let purchases = {};
+let users = [];
+let rewards = [];
+
+async function loadDataFromServer() {
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+            headers: {
+                'X-Master-Key': JSONBIN_API_KEY
+            }
+        });
+        const data = await response.json();
+        
+        // Update local data
+        items = data.record.items || [];
+        purchases = data.record.purchases || {};
+        users = data.record.users || [];
+        rewards = data.record.rewards || {};
+        
+        // Update displays
+        displayItems();
+        displayUsers();
+        displayAllPurchases();
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+}
+
+async function saveDataToServer() {
+    try {
+        const data = {
+            items,
+            purchases,
+            users,
+            rewards
+        };
+        
+        await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': JSONBIN_API_KEY
+            },
+            body: JSON.stringify(data)
+        });
+    } catch (error) {
+        console.error('Error saving data:', error);
+    }
+}
+
+function showHomePage() {
+    document.getElementById('homePage').style.display = 'block';
+    document.getElementById('receiptForm').style.display = 'none';
+    document.getElementById('adminForm').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('receiptDetails').style.display = 'none';
+    document.getElementById('rewardForm').style.display = 'none';
+    document.getElementById('rewardDetails').style.display = 'none';
+    document.getElementById('purchaseReview').style.display = 'none';
+    document.getElementById('searchRewardResults').style.display = 'none';
+}
+
+function showReceiptForm() {
+    document.getElementById('receiptForm').style.display = 'block';
+    document.getElementById('homePage').style.display = 'none';
+}
+
+function showAdminForm() {
+    document.getElementById('adminForm').style.display = 'block';
+    document.getElementById('homePage').style.display = 'none';
+}
+
+function showRewardForm() {
+    document.getElementById('rewardForm').style.display = 'block';
+    document.getElementById('homePage').style.display = 'none';
+}
+
+function getReceipt() {
+    const username = document.getElementById('username').value;
+    const receipt = purchases[username];
+    const receiptDetails = document.getElementById('receiptDetails');
+    
+    if (receipt) {
+        let html = `<h2>Receipt for ${username}</h2>`;
+        html += `<p>Purchase Date: ${receipt.date}</p>`;
+        html += '<ul>';
+        receipt.items.forEach(item => {
+            html += `<li>${item.name} - $${item.price.toFixed(2)}</li>`;
+        });
+        html += '</ul>';
+        html += `<p><strong>Subtotal: $${receipt.subtotal.toFixed(2)}</strong></p>`;
+        html += `<p>Rewards Applied: $${receipt.rewardsApplied.toFixed(2)}</p>`;
+        html += `<p><strong>Total: $${receipt.total.toFixed(2)}</strong></p>`;
+        html += `<p>Rewards Earned: $${receipt.rewardsEarned.toFixed(2)}</p>`;
+        receiptDetails.innerHTML = html;
+    } else {
+        receiptDetails.innerHTML = '<p>No purchases found for this username.</p>';
+    }
+    receiptDetails.style.display = 'block';
+}
+
+function verifyAdmin() {
+    const passcode = document.getElementById('adminPasscode').value;
+    if (passcode === '8878') {
+        document.getElementById('adminPanel').style.display = 'block';
+        document.getElementById('adminForm').style.display = 'none';
+        displayItems();
+        displayUsers();
+        displayAllPurchases();
+    } else {
+        alert('Incorrect passcode');
+    }
+}
+
+function addItem() {
+    const name = document.getElementById('itemName').value;
+    const price = parseFloat(document.getElementById('itemPrice').value);
+
+    if (name && !isNaN(price)) {
+        const item = { name, price };
+        items.push(item);
+        saveData();
+        displayItems();
+        clearInputs();
+    } else {
+        alert('Please enter a valid item name and price');
+    }
+}
+
+function displayItems() {
+    const itemList = document.getElementById('itemList');
+    itemList.innerHTML = '<h3>Available Items</h3>';
+    items.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+            <span>${item.name} - $${item.price.toFixed(2)}</span>
+            <div>
+                <button class="edit-btn" onclick="editItem(${index})">Edit</button>
+                <button class="delete-btn" onclick="deleteItem(${index})">Delete</button>
+                <button onclick="addToPurchase(${index})">Add to Purchase</button>
+            </div>
+        `;
+        itemList.appendChild(div);
+    });
+}
+
+function editItem(index) {
+    const newPrice = prompt(`Enter new price for ${items[index].name}:`, items[index].price);
+    if (newPrice !== null) {
+        const price = parseFloat(newPrice);
+        if (!isNaN(price)) {
+            items[index].price = price;
+            saveData();
+            displayItems();
+        } else {
+            alert('Please enter a valid price');
+        }
+    }
+}
+
+function deleteItem(index) {
+    if (confirm(`Are you sure you want to delete ${items[index].name}?`)) {
+        items.splice(index, 1);
+        saveData();
+        displayItems();
+    }
+}
+
+function addToPurchase(index) {
+    const purchaseItems = document.getElementById('purchaseItems');
+    const item = items[index];
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+        <span>${item.name} - $${item.price.toFixed(2)}</span>
+        <button onclick="removePurchaseItem(this)">Remove</button>
+    `;
+    purchaseItems.appendChild(div);
+}
+
+function removePurchaseItem(button) {
+    button.parentElement.remove();
+}
+
+function reviewPurchase() {
+    const username = document.getElementById('purchaseUsername').value;
+    const purchaseItems = document.getElementById('purchaseItems');
+    const selectedItems = Array.from(purchaseItems.children).map(div => {
+        const [name, price] = div.querySelector('span').textContent.split(' - $');
+        return { name, price: parseFloat(price) };
+    });
+
+    if (username && selectedItems.length > 0) {
+        const subtotal = selectedItems.reduce((sum, item) => sum + item.price, 0);
+        const availableRewards = rewards[username] || 0;
+        const rewardsApplied = 0; // Initially, no rewards are applied
+        const total = subtotal - rewardsApplied;
+        const rewardsEarned = total * 0.05;
+
+        let reviewHtml = `<h3>Purchase for ${username}</h3>`;
+        reviewHtml += '<ul>';
+        selectedItems.forEach(item => {
+            reviewHtml += `<li>${item.name} - $${item.price.toFixed(2)}</li>`;
+        });
+        reviewHtml += '</ul>';
+        reviewHtml += `<p><strong>Subtotal: $${subtotal.toFixed(2)}</strong></p>`;
+        reviewHtml += `<p>Available Rewards: $${availableRewards.toFixed(2)}</p>`;
+        reviewHtml += `<p>Rewards Applied: $${rewardsApplied.toFixed(2)}</p>`;
+        reviewHtml += `<p><strong>Total: $${total.toFixed(2)}</strong></p>`;
+        reviewHtml += `<p>Rewards Earned: $${rewardsEarned.toFixed(2)}</p>`;
+
+        document.getElementById('reviewItems').innerHTML = reviewHtml;
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('purchaseReview').style.display = 'block';
+    } else {
+        alert('Please enter a username and select at least one item');
+    }
+}
+
+function useRewardForPurchase() {
+    const username = document.getElementById('purchaseUsername').value;
+    const purchaseItems = document.getElementById('purchaseItems');
+    const selectedItems = Array.from(purchaseItems.children).map(div => {
+        const [name, price] = div.querySelector('span').textContent.split(' - $');
+        return { name, price: parseFloat(price) };
+    });
+
+    const subtotal = selectedItems.reduce((sum, item) => sum + item.price, 0);
+    const availableRewards = rewards[username] || 0;
+    const rewardsApplied = Math.min(availableRewards, subtotal);
+    const total = subtotal - rewardsApplied;
+    const rewardsEarned = total * 0.05;
+
+    let reviewHtml = `<h3>Purchase for ${username} (with Rewards Applied)</h3>`;
+    reviewHtml += '<ul>';
+    selectedItems.forEach(item => {
+        reviewHtml += `<li>${item.name} - $${item.price.toFixed(2)}</li>`;
+    });
+    reviewHtml += '</ul>';
+    reviewHtml += `<p><strong>Subtotal: $${subtotal.toFixed(2)}</strong></p>`;
+    reviewHtml += `<p>Available Rewards: $${availableRewards.toFixed(2)}</p>`;
+    reviewHtml += `<p>Rewards Applied: $${rewardsApplied.toFixed(2)}</p>`;
+    reviewHtml += `<p><strong>Total: $${total.toFixed(2)}</strong></p>`;
+    reviewHtml += `<p>Rewards Earned: $${rewardsEarned.toFixed(2)}</p>`;
+
+    document.getElementById('reviewItems').innerHTML = reviewHtml;
+    document.getElementById('reviewTotal').innerHTML = `<h3>Final Total: $${total.toFixed(2)}</h3>`;
+    document.getElementById('reviewRewards').innerHTML = `<p>Remaining Rewards: $${(availableRewards - rewardsApplied).toFixed(2)}</p>`;
+}
+
+function confirmPurchase() {
+    const username = document.getElementById('purchaseUsername').value;
+    const purchaseItems = document.getElementById('purchaseItems');
+    const selectedItems = Array.from(purchaseItems.children).map(div => {
+        const [name, price] = div.querySelector('span').textContent.split(' - $');
+        return { name, price: parseFloat(price) };
+    });
+
+    const subtotal = selectedItems.reduce((sum, item) => sum + item.price, 0);
+    const availableRewards = rewards[username] || 0;
+    const rewardsApplied = parseFloat(document.getElementById('reviewItems').textContent.match(/Rewards Applied: \$(\d+\.\d+)/)[1]);
+    const total = subtotal - rewardsApplied;
+    const rewardsEarned = total * 0.05;
+
+    // Update rewards
+    rewards[username] = (availableRewards - rewardsApplied) + rewardsEarned;
+
+    // Save purchase
+    purchases[username] = {
+        items: selectedItems,
+        date: new Date().toLocaleDateString(),
+        subtotal,
+        rewardsApplied,
+        total,
+        rewardsEarned
+    };
+
+    saveData();
+    alert('Purchase confirmed!');
+    cancelPurchase();
+}
+
+function cancelPurchase() {
+    document.getElementById('purchaseUsername').value = '';
+    document.getElementById('purchaseItems').innerHTML = '';
+    document.getElementById('adminPanel').style.display = 'block';
+    document.getElementById('purchaseReview').style.display = 'none';
+}
+
+function addUser() {
+    const username = document.getElementById('newUsername').value;
+    if (username && !users.includes(username)) {
+        users.push(username);
+        rewards[username] = 0;
+        saveData();
+        displayUsers();
+        clearInputs();
+    } else {
+        alert('Please enter a valid username');
+    }
+}
+
+function displayUsers() {
+    const userList = document.getElementById('userList');
+    userList.innerHTML = '<h3>Registered Users</h3>';
+    users.forEach((user, index) => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+            <span>${user}</span>
+            <button class="delete-btn" onclick="deleteUser(${index})">Delete</button>
+        `;
+        userList.appendChild(div);
+    });
+}
+
+function deleteUser(index) {
+    if (confirm(`Are you sure you want to delete ${users[index]}?`)) {
+        const username = users[index];
+        users.splice(index, 1);
+        delete rewards[username];
+        delete purchases[username];
+        saveData();
+        displayUsers();
+    }
+}
+
+function checkRewards() {
+    const username = document.getElementById('rewardUsername').value;
+    const rewardDetails = document.getElementById('rewardDetails');
+    const userRewards = rewards[username] || 0;
+    
+    rewardDetails.innerHTML = `<h2>Rewards for ${username}</h2>
+        <p>Available Rewards: $${userRewards.toFixed(2)}</p>`;
+    rewardDetails.style.display = 'block';
+}
+
+function searchRewards() {
+    const username = document.getElementById('searchRewardInput').value;
+    const searchResults = document.getElementById('searchRewardResults');
+    const userRewards = rewards[username] || 0;
+    
+    searchResults.innerHTML = `<h3>Rewards for ${username}</h3>
+        <p>Available Rewards: $${userRewards.toFixed(2)}</p>`;
+    searchResults.style.display = 'block';
+}
+
+function modifyReward() {
+    const username = document.getElementById('rewardUserInput').value;
+    const amount = parseFloat(document.getElementById('rewardAmount').value);
+
+    if (username && !isNaN(amount)) {
+        rewards[username] = amount;
+        saveData();
+        alert('Reward modified successfully');
+        clearInputs();
+    } else {
+        alert('Please enter valid username and amount');
+    }
+}
+
+function clearInputs() {
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => input.value = '');
+}
+
+async function saveData() {
+    // Save locally
+    localStorage.setItem('items', JSON.stringify(items));
+    localStorage.setItem('purchases', JSON.stringify(purchases));
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('rewards', JSON.stringify(rewards));
+    
+    // Save to server
+    await saveDataToServer();
+}
+
+function suggestUser(value, suggestionsDivId = 'userSuggestions') {
+    const suggestionsDiv = document.getElementById(suggestionsDivId);
+    suggestionsDiv.innerHTML = '';
+    if (!value) return;
+
+    const matches = users.filter(user => 
+        user.toLowerCase().includes(value.toLowerCase())
+    );
+
+    matches.forEach(match => {
+        const div = document.createElement('div');
+        div.textContent = match;
+        div.onclick = () => {
+            document.querySelector(`#${suggestionsDivId}`).parentElement.querySelector('input').value = match;
+            suggestionsDiv.innerHTML = '';
+        };
+        suggestionsDiv.appendChild(div);
+    });
+}
+
+function displayAllPurchases() {
+    const purchasesList = document.getElementById('purchasesList');
+    purchasesList.innerHTML = '<h3>All Purchases</h3>';
+    
+    Object.entries(purchases).forEach(([username, purchase]) => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+            <span>${username} - ${purchase.date}</span>
+            <span>Total: $${purchase.total.toFixed(2)}</span>
+        `;
+        purchasesList.appendChild(div);
+    });
+}
+
+async function initialize() {
+    await loadDataFromServer();
+    showHomePage();
+}
+
+// Start the app
+initialize();
+</script>
+</body></html>
